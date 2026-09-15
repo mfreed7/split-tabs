@@ -1,6 +1,6 @@
 # Opening links in a split tab
 
-Authors: [Mason Freed](mailto:masonf@chromium.org)
+Authors: [Mason Freed](https://github.com/mfreed7) (@mfreed7)
 
 Based on, and with credit to, the original explainer
 ["Allow target navigation at split tab"](https://github.com/MicrosoftEdge/MSEdgeExplainers/blob/main/SplitTab/NavigationInSplitTab/explainer.md)
