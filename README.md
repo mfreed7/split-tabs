@@ -177,13 +177,28 @@ window.open("https://www.example.com", "_blank", "split,noopener");
   Proposed resolution: `split` wins, and the `popup` request is ignored.
 - **Requests, not commands.** The user agent may ignore `split`,
   `splitposition`, and/or `splitsize` entirely — for example on a narrow
-  window, on mobile, when the window is already split, or based on user
-  settings. It may also clamp `splitsize` to a usable range.
+  window, on mobile, or based on user settings. It may also clamp `splitsize`
+  to a usable range.
 - **Fallback.** When a split is not created, the navigation opens as an
   ordinary new tab (not a popup window, and not a new browser window). The one
   exception: if the author specified both `split` and `popup`, and the split is
   not created, the fallback is a popup, since that is what the author asked for
   otherwise.
+- **`close()` works and collapses the split.** The view was opened by script,
+  so it is script-closable, and `newWindow.close()` behaves as it would for a
+  popup or a script-opened tab. Closing the split view should end the split and
+  return the remaining view to the full window, the same as when the user
+  closes one side of a split. A page can also close itself out of a split with
+  `window.close()`. This needs no new API and no spec change; it follows from
+  `close()` already working on script-opened top-level views. As elsewhere, the
+  resulting layout is the user agent's call.
+- **If the window is already split, the request falls back to a new tab.** When
+  the page making the request is itself already in a split — whether the user
+  created it or a previous `split` call did — this proposal does not define a
+  way to replace the other side, since that would evict content the user
+  deliberately placed there. The navigation opens as an ordinary new tab
+  instead. A page that wants to update a split it opened can navigate or
+  `postMessage` the handle it already has.
 - **Named targets still win.** As today, if the `target` parameter names an
   existing navigable, that navigable is navigated and the window features are
   ignored. Authors should use `_blank`.
@@ -262,13 +277,89 @@ since it has no `popup=0`-style escape hatch.
 
 ### Cons
 
-- `windowFeatures` is only available via `window.open()`, so this proposal has
-  no declarative (HTML) form. See [Open Questions](#open-questions).
+- `windowFeatures` is only available via `window.open()`, so the core proposal
+  is JavaScript-only. See [Declarative form](#declarative-form) for a sketch of
+  the HTML counterpart.
 - The legacy popup fallback described above requires `popup=0` to be written
   defensively.
 - `windowFeatures` is an unstructured, legacy-flavored string format. It is not
   the format anyone would choose today, but it is the format that already
   exists for exactly this purpose.
+
+## Declarative form
+
+The imperative API above is the core of the proposal, but the SERP use case is
+built on plain anchors. Requiring a click handler and a `window.open()` call to
+open a link in a split gives up middle-click, the context menu, and the other
+native link behaviors.
+
+This section sketches a declarative counterpart. It is not split tab specific:
+the missing capability in HTML is expressing how the new view should be
+presented, and `split` is one answer to that.
+
+### The attribute
+
+Add a `windowfeatures` content attribute to elements that already support
+`target` — `<a>`, `<area>`, and `<form>` — carrying a restricted window
+features string:
+
+```html
+<!-- Open in a split, on the right, taking 40% of the window. -->
+<a href="https://example.com"
+   target="_blank"
+   windowfeatures="split,splitposition=right,splitsize=40">Open in a split tab</a>
+
+<!-- The declarative equivalent of window.open(url, "_blank", "popup,width=500,height=700"). -->
+<a href="https://example.com"
+   target="_blank"
+   windowfeatures="popup,width=500,height=700">Open in a popup</a>
+```
+
+The attribute is parsed with the
+[existing window features tokenizer](https://html.spec.whatwg.org/multipage/nav-history-apis.html#concept-window-open-features-tokenize),
+so there is one syntax and one parser. It reflects in IDL as `windowFeatures`.
+
+### Which features are allowed
+
+Not all of them:
+
+| Feature | In the attribute? | Why |
+| --- | --- | --- |
+| `split` | Yes | The primary motivation for the attribute. |
+| `splitposition` | Yes | Presentation hint. |
+| `splitsize` | Yes | Presentation hint, clamped by the user agent. |
+| `popup` | Yes | Without it, the attribute only serves splits, and HTML still cannot express what JavaScript can. |
+| `width` / `height` | Yes | The popup analogue of `splitsize`. |
+| `left` / `top` | Yes | Same rationale as `width`/`height`; the user agent is free to override or clamp both. |
+| `noopener` / `noreferrer` | No | Already expressible with `rel`. |
+| `location`, `toolbar`, `menubar`, `resizable`, `scrollbars`, `status` | No | Legacy, ignored, and meaningful only as popup-detection inputs. |
+
+Disallowed and unrecognized features are ignored, as window features generally
+are.
+
+### Behavior
+
+- **Only applies when a new top-level view is created.** With
+  `target="_self"`, `_parent`, `_top`, or the name of an existing navigable,
+  the attribute is ignored.
+- **`target` is implied.** If `windowfeatures` requests a `popup` or `split`
+  and `target` is absent, the navigation targets a new top-level view, as
+  though `target="_blank"` had been specified. Requiring an explicit
+  `target="_blank"` is the more conservative option; see
+  [Open Questions](#open-questions).
+- **`rel` governs the opener.** A `target="_blank"` anchor
+  [implies `noopener`](https://html.spec.whatwg.org/multipage/links.html#link-type-noopener),
+  and that does not change here; `rel="opener"` restores it. So
+  `windowfeatures` controls presentation and `rel` controls the relationship.
+  Note that this makes the declarative default the opposite of the imperative
+  one, which follows from each surface keeping its established behavior.
+- **Fallback behavior.** A browser that does not know the attribute ignores it,
+  and the link opens as an ordinary new tab. The `popup=0` workaround described
+  above is not needed here, because an unknown attribute does nothing, whereas
+  an unknown feature string implies a popup.
+- **User activation.** Following a link is a user gesture, so these navigations
+  are subject to the same popup blocking rules as any other, with no special
+  casing.
 
 ## Alternatives Considered
 
@@ -299,14 +390,11 @@ proposed a new navigable target name, `_split`, usable both as
   `windowFeatures` form has no such split-brain: the opener behaves the same
   everywhere, and is controlled by the existing `noopener` feature.
 
-### A new content attribute on `<a>`
+### A boolean `split` content attribute on `<a>`
 
-Add e.g. `<a href="..." split>`. This has no effect on unsupported browsers,
-which is a nice property, but it leaves the relationship between `target` and
-the new attribute unspecified (what does `<a target="_self" split>` mean?), and
-it still needs a separate mechanism for the additional hints. A declarative
-form is probably still desirable eventually; see
-[Open Questions](#open-questions).
+Add e.g. `<a href="..." split>`. Superseded by
+[Declarative form](#declarative-form), which uses a feature string instead of
+one attribute per knob, and so extends to the positioning and sizing hints.
 
 ### The Window Management API
 
@@ -353,11 +441,12 @@ preserved: a page holding a window handle can infer a little about the result,
 just as it can for a popup today. That is no worse than `window.open()` today,
 and not worth breaking the main use cases to prevent.
 
-### Closing or resizing the split afterwards
+### Resizing or repositioning the split afterwards
 
-Out of scope. Once opened, the split is under user and user-agent control. The
-opener does keep the ordinary window handle abilities — `close()`, `focus()`,
-and navigation — but none of those are split-specific.
+Out of scope. `splitposition` and `splitsize` are hints applied at open time
+only; there is no API to change the split later. Once open, the split belongs
+to the user and the user agent. (Closing is a different matter, and does work —
+see [Behavior](#behavior).)
 
 ### Forcing `noopener`
 
@@ -420,9 +509,9 @@ Considered and rejected; see [Behavior](#behavior).
   opener's choice, `Cross-Origin-Opener-Policy` for the openee's — sufficient,
   or is there a case for split-specific severance? Relatedly, should a split
   *opened by* a cross-origin navigation chain behave any differently?
-- **Declarative form.** Should there be an HTML equivalent, and if so, what?
-  Note that a declarative form may be important for the SERP use case, where
-  links are plain anchors.
+- **Declarative form.** Sketched in [Declarative form](#declarative-form).
+  Open: whether the attribute implies `target="_blank"` or requires it, and
+  whether it ships alongside the imperative API or follows it.
 - **Position values.** Are `top`/`bottom` worth specifying, given that not all
   browsers support stacked splits? Should the values instead be logical
   (`inline-start` / `inline-end` / `block-start` / `block-end`) so they respect
@@ -431,6 +520,9 @@ Considered and rejected; see [Behavior](#behavior).
   sandboxed iframes, and if so, does that need a new sandbox token
   (e.g. `allow-split-tab-navigation`), or is
   `allow-popups` sufficient?
-- **Existing splits.** What should happen if the opener is already in a split?
-  Replace the other side, create a new split elsewhere, or fall back to a new
-  tab?
+- **Existing splits.** A request from an already-split window falls back to a
+  new tab (see [Behavior](#behavior)). Is that too strict? A page arguably
+  should be allowed to replace a split *it* opened and still holds a handle to,
+  though it can already do that by navigating the handle. Relatedly, on user
+  agents that support three or more panes, should a second request add a pane
+  rather than fall back?
