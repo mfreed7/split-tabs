@@ -119,7 +119,7 @@ configured by `splitposition`/`splitsize`.
 | `noreferrer` | boolean | Omit the `Referer` header; also implies `noopener`. | |
 | `location`, `toolbar`, `menubar`, `resizable`, `scrollbars`, `status` | boolean | Legacy and ignored, except as inputs to [checking if a popup window is requested](https://html.spec.whatwg.org/multipage/nav-history-apis.html#popup-window-is-requested). | |
 | `split` | boolean | Request that the new navigable be opened as a split tab, alongside the opener. | **New** |
-| `splitposition` | `left`, `right`, `top`, `bottom` | Which side of the current tab the new content should appear on. Optional; the user agent picks a default (likely `right`, or the inline-end side). Only applies when a split is requested. | **New** |
+| `splitposition` | `left`, `right`, `top`, `bottom` | Which side of the current tab the new content should appear on. Optional; the user agent picks a default (likely `right`, or the inline-end side). Only applies when a split is requested. Not all values need to be supported by the browser - see "Fallback" under [Behavior](#behavior). | **New** |
 | `splitsize` | percentage, e.g. `30` | The share of the split, in percent, to give to the **new** content. The current page gets the remainder. Optional; the user agent picks a default (likely `50`). Only applies when a split is requested. | **New** |
 
 `split` is deliberately parallel to `popup`: it is a boolean window feature
@@ -173,8 +173,9 @@ window.open("https://www.example.com", "_blank", "split,noopener");
     [Privacy and Security Considerations](#privacy-and-security-considerations).
     The mitigation there is browser UI, not an API restriction.
 - **Mutually exclusive with `popup`.** Because both features describe the
-  container for the new content, specifying both is an authoring error.
-  Proposed resolution: `split` wins, and the `popup` request is ignored.
+  container for the new content, they are mutually exclusive. When both are
+  specified, `split` wins, and the `popup` request is ignored. (Except if `split`
+  isn't possible - see "Fallback" below.)
 - **User agent discretion.** The user agent may ignore `split`,
   `splitposition`, and/or `splitsize` entirely — for example on a narrow
   window, on mobile, or based on user settings. It may also clamp `splitsize`
@@ -282,8 +283,9 @@ opt-out.
   the HTML counterpart.
 - The legacy popup fallback described above requires `popup=0` to be written
   defensively.
-- `windowFeatures` is an unstructured, legacy string format. It is not a format
-  anyone would design today, but it already exists for this purpose.
+- `windowFeatures` is an unstructured, legacy string format. It is likely not
+  the format that would be designed from scratch today, but it already exists
+  for this purpose and is familiar to developers.
 
 ## Declarative form
 
@@ -500,24 +502,17 @@ Considered and rejected; see [Behavior](#behavior).
   Alternatives: `splittab`, `splitside`, `splitratio`, `splitwidth`.
 - **`popup=0` ergonomics.** Should the spec do something to make the legacy
   fallback less error-prone, or is documenting `"popup=0,split"` sufficient?
-- **Precedence.** If both `popup` and `split` are specified, which wins? This
-  document proposes `split`.
 - **Opener controls.** The opener is preserved by default (see
   [Behavior](#behavior)). Are the existing controls — `noopener` for the
   opener's choice, `Cross-Origin-Opener-Policy` for the openee's — sufficient,
   or is there a case for split-specific behavior? Relatedly, should a split
   *opened by* a cross-origin navigation chain behave any differently?
 - **Declarative form.** Sketched in [Declarative form](#declarative-form).
-  Open: whether the attribute implies `target="_blank"` or requires it, and
-  whether it ships alongside the imperative API or follows it.
+  Open: whether the attribute implies `target="_blank"` or requires it.
 - **Position values.** Are `top`/`bottom` worth specifying, given that not all
   browsers support stacked splits? Should the values instead be logical
   (`inline-start` / `inline-end` / `block-start` / `block-end`) so they respect
   writing mode and directionality?
-- **Sandboxed iframes.** Should split tab requests be restricted inside
-  sandboxed iframes, and if so, does that need a new sandbox token
-  (e.g. `allow-split-tab-navigation`), or is
-  `allow-popups` sufficient?
 - **Existing splits.** A request from an already-split window falls back to a
   new tab (see [Behavior](#behavior)). Is that too strict? A page arguably
   should be allowed to replace a split *it* opened and still holds a handle to,
