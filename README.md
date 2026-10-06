@@ -23,12 +23,13 @@ and content location of future work and discussions.
 
 ## Introduction
 
-Split screen scenarios are increasingly common. In addition to dual screen
-devices (i.e. physical split screen), browsers including Chrome, Edge, Arc,
-Whale, and Vivaldi ship split tab (i.e. virtual split screen) features, where
-two tabs are tiled side-by-side within a single browser window. When using a
-split tab, there are multiple cases in which users want to open a link and view
-it side-by-side with the source page (see [Use Cases](#use-cases)).
+Split screen scenarios are increasingly common. In addition to dual
+screen devices (i.e. physical split screen), browsers including Chrome,
+Edge, Firefox, Arc, Whale, Vivaldi, and others ship split tab (i.e.
+virtual split screen) features, where two tabs are tiled side-by-side
+within a single browser window. When using a split tab, there are
+multiple cases in which users want to open a link and view it
+side-by-side with the source page (see [Use Cases](#use-cases)).
 
 Today there is no way for a web author to request that a navigation open into a
 split tab. The existing navigation targets (`_blank`, `_self`, `_parent`,
