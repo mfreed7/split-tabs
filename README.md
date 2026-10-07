@@ -454,6 +454,16 @@ controlled by the user and the user agent. (Closing does work; see
 
 Considered and rejected; see [Behavior](#behavior).
 
+### Focus
+
+Most/all browsers today will move focus to the newly-opened popup
+window or new tab, for a call to `window.open()` with user activation.
+This proposal would keep that same behavior for opening a split tab -
+focus would move into the newly-opened split tab, rather than staying
+within the existing tab. The exception would be for the declarative
+API, when the user uses Ctrl/Command modifiers to open the new tab
+leaving focus in the existing document.
+
 ## Privacy and Security Considerations
 
 ### Privacy
