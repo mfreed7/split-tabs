@@ -22,7 +22,7 @@ section to keep the community up-to-date with the most current standards venue
 and content location of future work and discussions.
 
 * This document status: **Active**
-* Expected venue: [W3C Web Incubator Community Group](https://wicg.io/)
+* Expected venue: [WHATWG Issue](https://github.com/whatwg/html/issues/13153)
 * **Current version: this document**
 
 ## Introduction
