@@ -1,6 +1,6 @@
 # Opening links in a split tab
 
-Authors: [Mason Freed](https://github.com/mfreed7) (@mfreed7)
+Authors: [Mason Freed](https://github.com/mfreed7) (@mfreed7)  
 Last updated: Oct 27, 2026
 
 Based on, and with credit to, the original explainer
