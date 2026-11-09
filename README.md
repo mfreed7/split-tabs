@@ -511,6 +511,8 @@ leaving focus in the existing document.
   an implementation concern rather than a reason to restrict the API; sites
   that want the separation can use `Cross-Origin-Opener-Policy` or `noopener`.
 
+See also the [Security and Privacy Questionnaire](#security-and-privacy-questionnaire) below.
+
 ## Open Questions
 
 - **Naming.** `split` / `splitposition` / `splitsize` are placeholders.
@@ -534,3 +536,116 @@ leaving focus in the existing document.
   though it can already do that by navigating the handle. Relatedly, on user
   agents that support three or more panes, should a second request add a pane
   rather than fall back?
+
+## Security and Privacy Questionnaire
+
+Feature: `split`, `splitposition`, `splitsize` window features for
+`window.open()`, and the `windowfeatures` content attribute on `<a>`, `<area>`,
+and `<form>`.
+
+### 2.1. What information does this feature expose, and for what purposes?
+
+None. The page cannot query whether split tabs are supported, or whether a
+split was created. (As with any `window.open()`, the page can observe ordinary
+viewport changes, such as `resize`, which are already exposed.)
+
+### 2.2. Do features in your specification expose the minimum amount of information necessary to implement the intended functionality?
+
+Yes. A proposed `navigator.splitTabSupported` was deliberately dropped to avoid
+fingerprinting.
+
+### 2.3. Do the features in your specification expose personal information, personally-identifiable information (PII), or information derived from either?
+
+No.
+
+### 2.4. How do the features in your specification deal with sensitive information?
+
+N/A. No sensitive information is handled.
+
+### 2.5. Does data exposed by your specification carry related but distinct information that may not be obvious to users?
+
+No.
+
+### 2.6. Do the features in your specification introduce state that persists across browsing sessions?
+
+No.
+
+### 2.7. Do the features in your specification expose information about the underlying platform to origins?
+
+No.
+
+### 2.8. Does this specification allow an origin to send data to the underlying platform?
+
+No. Only layout hints (position enum, integer percentage) are passed to the
+user agent, which validates and clamps them.
+
+### 2.9. Do features in this specification enable access to device sensors?
+
+No.
+
+### 2.10. Do features in this specification enable new script execution/loading mechanisms?
+
+No.
+
+### 2.11. Do features in this specification allow an origin to access other devices?
+
+No.
+
+### 2.12. Do features in this specification allow an origin some measure of control over a user agent's native UI?
+
+Yes, limited: a page can *request* that a new tab open as a split alongside it,
+with a position and size hint. Mitigations:
+
+- Requires user activation; subject to normal popup blocking.
+- The user agent may ignore the request; fallback is an ordinary new tab.
+- Only honored when the opener is the active tab in a normal browser window
+  and is not already split (user-placed splits are never replaced).
+- `splitsize` is clamped (10–90% in Chromium).
+- User click modifiers (e.g. Ctrl/Cmd-click) take precedence.
+- The user retains full control to resize, rearrange, or close the split.
+- Adjacent-pane spoofing is mitigated in browser UI by clearly indicating the
+  origin of each pane and the boundary between panes. Users can already create
+  such splits manually.
+
+### 2.13. What temporary identifiers do the features in this specification create or expose to the web?
+
+None.
+
+### 2.14. How does this specification distinguish between behavior in first-party and third-party contexts?
+
+No distinction beyond existing `window.open()` / link navigation rules (user
+activation, iframe `sandbox` `allow-popups`, etc.).
+
+### 2.15. How do the features in this specification work in the context of a browser's Private Browsing or Incognito mode?
+
+Identically to normal mode. Nothing is exposed or persisted.
+
+### 2.16. Does this specification have both "Security Considerations" and "Privacy Considerations" sections?
+
+Not yet; there is no spec. The appropriate parts of this questionnaire will be included in the spec.
+
+### 2.17. Do features in your specification enable origins to downgrade default security protections?
+
+No. The opener relationship is the same as for any `window.open()` (or link
+`rel`) navigation; `noopener`, `noreferrer`, and COOP work as usual.
+
+### 2.18. What happens when a document that uses your feature is kept alive in BFCache (instead of getting destroyed) after navigation, and potentially gets reused on future navigations back to the document?
+
+Nothing feature-specific. The hints apply only at open time; no state is kept
+in the document.
+
+### 2.19. What happens when a document that uses your feature gets disconnected?
+
+Nothing feature-specific; same as `window.open()` from a disconnected document.
+
+### 2.20. Does your spec define when and how new kinds of errors should be raised?
+
+No. Invalid or unsupported values are silently ignored.
+
+### 2.21. Does your feature allow sites to learn about the user's use of assistive technology?
+
+No.
+
+### 2.22. What should this questionnaire have asked?
+
+N/A.
