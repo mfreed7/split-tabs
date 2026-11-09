@@ -24,6 +24,7 @@ and content location of future work and discussions.
 * This document status: **Active**
 * Expected venue: [WHATWG Issue](https://github.com/whatwg/html/issues/13153)
 * **Current version: this document**
+* Demo: [source](https://github.com/mfreed7/split-tabs/blob/main/test/demo.html), [run](https://mfreed7.github.io/split-tabs/test/demo.html)
 
 ## Introduction
 
@@ -132,6 +133,8 @@ requesting a particular kind of "container" for the new content, and it is
 mutually exclusive with `popup`.
 
 ### Examples
+
+A live demo is available: [source](https://github.com/mfreed7/split-tabs/blob/main/test/demo.html), [run](https://mfreed7.github.io/split-tabs/test/demo.html).
 
 ```js
 // Basic: request a split tab.
