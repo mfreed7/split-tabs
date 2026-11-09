@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<link rel="help" href="https://github.com/mfreed7/split-tabs">
+
+<div class="example">
+  <code>window.open('https://example.com', '_blank', 'split,splitposition=right,splitsize=40')</code>:<br>
+  <button onclick="window.open('https://example.com', '_blank', 'split,splitposition=right,splitsize=40')">window.open()
+    split tab</button>
+</div>
+
+<div class="example">
+  <code>&lt;a href="https://example.com" target="_blank" windowfeatures="split,splitposition=right,splitsize=40"&gt;</code>:<br>
+  <a href="https://example.com" target="_blank" windowfeatures="split,splitposition=right,splitsize=40">windowfeatures
+    attribute split tab</a>
+</div>
+
+<style>
+  .example {
+    border: 1px solid #ccc;
+    padding: 16px;
+    margin: 20px 0;
+  }
+
+  code {
+    display: inline-block;
+    margin-bottom: 8px;
+  }
+</style>
+
+<p id="detection"></p>
+<script>
+  const supported = 'windowFeatures' in HTMLAnchorElement.prototype;
+  document.getElementById('detection').textContent = supported
+    ? 'Feature seems to be supported (windowFeatures in HTMLAnchorElement)'
+    : 'Feature NOT supported (windowFeatures NOT in HTMLAnchorElement)';
+</script>
