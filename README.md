@@ -423,23 +423,35 @@ not a good fit here because:
 
 ## Other things considered
 
-### Feature detection (`navigator.splitTabSupported`)
+### Feature detection
 
-The original proposal included a `navigator.splitTabSupported` boolean so that
-authors could branch on split tab availability. That is omitted here, because:
+There are two separate aspects of feature detection to distinguish:
 
-- It adds a fingerprinting surface: whether a split tab is available is a
-  function of browser, browser version, window size, form factor, and possibly
-  user settings — all correlated bits that are otherwise not exposed.
-- It is unreliable in practice. Support is dynamic (a window that is too narrow
-  now may be wide enough later), so a boolean read at page load is easily
-  stale.
-- The request/fallback model above means authors mostly do not need it: the
-  call is safe to make unconditionally, and falls back to a normal tab.
+1. **Detecting API support:** Authors can detect whether the browser supports
+   these features by checking for the reflected IDL attribute:
 
-If a compelling use case for detection appears, options that leak less include
-a CSS media feature, or reporting only after a user gesture. In any case, the
-value would still be a hint rather than a guarantee.
+   ```js
+   const supported = 'windowFeatures' in HTMLAnchorElement.prototype;
+   ```
+
+2. **Detecting whether a split tab will actually be created:** Authors cannot
+   detect whether requesting a split will actually produce a split tab at any
+   particular time. The original proposal considered an API like
+   `navigator.splitTabSupported` so that authors could branch on split tab
+   availability, but that is omitted here, because:
+
+   - It adds a fingerprinting surface: whether a split tab is available is a
+     function of browser, browser version, window size, form factor, and possibly
+     user settings — all correlated bits that are otherwise not exposed.
+   - It is unreliable in practice. Support is dynamic (a window that is too narrow
+     now may be wide enough later), so a boolean read at page load is easily
+     stale.
+   - The request/fallback model above means authors mostly do not need it: the
+     call is safe to make unconditionally, and falls back to a normal tab.
+
+   If a compelling use case for outcome detection appears, options that leak less
+   include a CSS media feature, or reporting only after a user gesture. In any case,
+   the value would still be a hint rather than a guarantee.
 
 ### Reporting the actual result
 
