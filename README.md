@@ -1,7 +1,7 @@
 # Opening links in a split tab
 
 Authors: [Mason Freed](https://github.com/mfreed7) (@mfreed7)  
-Last updated: Oct 27, 2026
+Last updated: Nov 111, 2026
 
 Based on, and with credit to, the original explainer
 ["Allow target navigation at split tab"](https://github.com/MicrosoftEdge/MSEdgeExplainers/blob/main/SplitTab/NavigationInSplitTab/explainer.md)
@@ -220,14 +220,14 @@ window.open("https://www.example.com", "_blank", "split,noopener");
 
 See the [HTML spec PR](https://github.com/whatwg/html/pull/13245).
 
-### Legacy fallback hazard (and mitigation)
+### Legacy fallback (and mitigation)
 
 In browsers that do not implement this proposal, `"split"` is an unrecognized
 feature name, but the feature string is *non-empty*, so
 [checking if a popup window is requested](https://html.spec.whatwg.org/multipage/nav-history-apis.html#popup-window-is-requested)
 returns **true**. In other words, on today's browsers
-`window.open(url, "_blank", "split")` opens a **popup window**, which is not
-the desired fallback.
+`window.open(url, "_blank", "split")` opens a **popup window**, which
+might not be the desired fallback.
 
 Authors can opt out of that explicitly, because an explicit `popup=0` short-
 circuits the popup check:
@@ -237,11 +237,6 @@ circuits the popup check:
 window.open("https://www.example.com", "_blank", "popup=0,split");
 ```
 
-Whether this is acceptable, or whether the feature should be named in a way
-that avoids the problem, is an [open question](#open-questions). The equivalent
-problem in the `target`-based proposal (an unexpected opener, or navigating a
-same-named frame) is harder to work around, since it has no `popup=0`-style
-opt-out.
 
 ### Pros
 
@@ -257,11 +252,10 @@ opt-out.
 
 ### Cons
 
-- `windowFeatures` is only available via `window.open()`, so the core proposal
-  is JavaScript-only. See [Declarative form](#declarative-form) for a sketch of
-  the HTML counterpart.
-- The legacy popup fallback described above requires `popup=0` to be written
-  defensively.
+- `windowFeatures` is only available via `window.open()`, which is
+  JavaScript-only. See [Declarative form](#declarative-form) for
+  companion proposal to provide a declarative alternative for all of
+  `window.open()`.
 - `windowFeatures` is an unstructured, legacy string format. It is likely not
   the format that would be designed from scratch today, but it already exists
   for this purpose and is familiar to developers.
