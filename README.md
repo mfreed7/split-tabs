@@ -215,39 +215,9 @@ window.open("https://www.example.com", "_blank", "split,noopener");
   out-of-range values are ignored (treated as "user agent default"), consistent
   with how other window features handle invalid input.
 
-### Spec sketch
+### Spec
 
-The changes are confined to the
-[window open steps](https://html.spec.whatwg.org/multipage/nav-history-apis.html#window-open-steps)
-and
-[the rules for choosing a navigable](https://html.spec.whatwg.org/multipage/document-sequences.html#the-rules-for-choosing-a-navigable);
-no new navigable target names are introduced.
-
-1. In the window open steps, after
-   [tokenizing](https://html.spec.whatwg.org/multipage/nav-history-apis.html#concept-window-open-features-tokenize)
-   *features*, let *splitRequested* be the result of
-   [checking if a window feature is set](https://html.spec.whatwg.org/multipage/nav-history-apis.html#window-feature-is-set)
-   given *tokenizedFeatures*, "`split`", and false.
-2. If *splitRequested* is true and the user agent supports and chooses to
-   create a split tab, then:
-   - Set *windowType* to "`split tab`", or "`split tab with no opener`" if
-     *noopener* was set by the `noopener` or `noreferrer` features.
-   - Let *splitPosition* be *tokenizedFeatures*["`splitposition`"] if it is one
-     of "`left`", "`right`", "`top`", "`bottom`"; otherwise a user-agent
-     defined default.
-   - Let *splitSize* be the result of parsing
-     *tokenizedFeatures*["`splitsize`"] as an integer percentage; if that fails
-     or is out of range, a user-agent defined default.
-   - These values are passed to the user agent as hints when creating the new
-     [top-level traversable](https://html.spec.whatwg.org/multipage/document-sequences.html#top-level-traversable).
-3. [Check if a popup window is requested](https://html.spec.whatwg.org/multipage/nav-history-apis.html#popup-window-is-requested)
-   returns false if a split tab was created in step 2. This matters for two
-   reasons:
-   - It makes `split` and `popup` mutually exclusive in a well-defined way,
-     while still letting `popup` apply if the split is not created.
-   - Without it, `split` would be an "unrecognized" non-empty feature string
-     and would therefore trigger popup behavior — the legacy-browser hazard
-     described below.
+See the [HTML spec PR](https://github.com/whatwg/html/pull/13245).
 
 ### Legacy fallback hazard (and mitigation)
 
@@ -353,9 +323,8 @@ are.
   the attribute is ignored.
 - **`target` is implied.** If `windowfeatures` requests a `popup` or `split`
   and `target` is absent, the navigation targets a new top-level view, as
-  though `target="_blank"` had been specified. Requiring an explicit
-  `target="_blank"` is the more conservative option; see
-  [Open Questions](#open-questions).
+  though `target="_blank"` had been specified. An explicit `target="_blank"` is
+  not required. (See also [Interaction with `<base target>`](#interaction-with-base-target).)
 - **`rel` governs the opener.** A `target="_blank"` anchor
   [implies `noopener`](https://html.spec.whatwg.org/multipage/links.html#link-type-noopener),
   and that does not change here; `rel="opener"` restores it. So
@@ -483,6 +452,15 @@ within the existing tab. The exception would be for the declarative
 API, when the user uses Ctrl/Command modifiers to open the new tab
 leaving focus in the existing document.
 
+### Interaction with `<base target>`
+
+When a link has no `target` attribute but its `windowfeatures` requests
+`split` or `popup`, the implied `_blank` takes precedence over the document's
+`<base target>`. The attribute is on the link itself, so it is treated as more
+specific than the page-wide default, in the same way that a link's own `target`
+already overrides `<base target>`. Otherwise, on a page whose `<base target>`
+names a frame, `windowfeatures` would silently do nothing.
+
 ## Privacy and Security Considerations
 
 ### Privacy
@@ -539,8 +517,6 @@ See also the [Security and Privacy Questionnaire](#security-and-privacy-question
   opener's choice, `Cross-Origin-Opener-Policy` for the openee's — sufficient,
   or is there a case for split-specific behavior? Relatedly, should a split
   *opened by* a cross-origin navigation chain behave any differently?
-- **Declarative form.** Sketched in [Declarative form](#declarative-form).
-  Open: whether the attribute implies `target="_blank"` or requires it.
 - **Position values.** Are `top`/`bottom` worth specifying, given that not all
   browsers support stacked splits? Should the values instead be logical
   (`inline-start` / `inline-end` / `block-start` / `block-end`) so they respect
