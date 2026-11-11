@@ -207,7 +207,8 @@ window.open("https://www.example.com", "_blank", "split,noopener");
   way to replace the other side, since that would evict content the user
   deliberately placed there. The navigation opens as an ordinary new tab
   instead. A page that wants to update a split it opened can navigate or
-  `postMessage` the handle it already has.
+  `postMessage` the handle it already has (but see
+  [Reusing a split after a COOP navigation](#reusing-a-split-after-a-coop-navigation)).
 - **Named targets take precedence.** As today, if the `target` parameter names
   an existing navigable, that navigable is navigated and the window features
   are ignored. Authors should use `_blank`.
@@ -460,6 +461,24 @@ When a link has no `target` attribute but its `windowfeatures` requests
 specific than the page-wide default, in the same way that a link's own `target`
 already overrides `<base target>`. Otherwise, on a page whose `<base target>`
 names a frame, `windowfeatures` would silently do nothing.
+
+### Reusing a split after a COOP navigation
+
+A page can reuse a split it opened by navigating the handle, or by naming it
+(`window.open(url, "myPane", "split")`, then `target="myPane"`). This stops
+working if the split navigates to a document whose
+[`Cross-Origin-Opener-Policy`](https://html.spec.whatwg.org/multipage/browsers.html#cross-origin-opener-policies)
+doesn't match the opener's (for example, many large sites send
+`same-origin-allow-popups`). That forces a browsing context group switch, which
+by design clears the target name and leaves the opener's handle reporting
+`closed`. A later request by that name then opens a new view instead, which in
+an already-split window is an ordinary tab.
+
+This is existing COOP behavior, identical to what happens with popups and tabs
+today, and is intentional: COOP exists to sever exactly this relationship. This
+proposal does not work around it (e.g., by letting the browser replace a split
+the page previously opened), since that would let the opener keep controlling
+content that opted out of being controlled.
 
 ## Privacy and Security Considerations
 
