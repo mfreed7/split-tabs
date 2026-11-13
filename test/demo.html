@@ -2,19 +2,65 @@
 <meta charset="utf-8">
 <link rel="help" href="https://github.com/mfreed7/split-tabs">
 
-<div class="example">
-  <code>window.open('https://example.com', '_blank', 'split,splitposition=right,splitsize=40')</code>:<br>
-  <button onclick="window.open('https://example.com', '_blank', 'split,splitposition=right,splitsize=40')">window.open()
-    split tab</button>
+<div class="settings">
+  <label>splitposition:
+    <select id="splitposition">
+      <option value="left">left</option>
+      <option value="right" selected>right</option>
+      <option value="top">top</option>
+      <option value="bottom">bottom</option>
+    </select>
+  </label>
+  <label>splitsize:
+    <input type="range" id="splitsize" min="0" max="100" value="60">
+    <output id="splitsize-value">60</output>
+  </label>
+  <button id="close">Close the split!</button>
+  <span id="close-warning" style="color: red"></span>
 </div>
 
 <div class="example">
-  <code>&lt;a href="https://example.com" target="_blank" windowfeatures="split,splitposition=right,splitsize=40"&gt;</code>:<br>
-  <a href="https://example.com" target="_blank" windowfeatures="split,splitposition=right,splitsize=40">windowfeatures
-    attribute split tab</a>
+  <code>window.open(url, 'split-demo', '<span class="features">split,splitposition=right,splitsize=60</span>')</code>:<br>
+  <button data-url="https://en.wikipedia.org/wiki/Web_browser">Wikipedia</button>
+  <button data-url="https://www.w3.org">W3C</button>
+  <button data-url="https://example.com">Example.com</button>
+  <button data-url="https://www.youtube.com">YouTube (COOP!)</button>
+</div>
+
+<div class="example">
+  <div>Diagnostics: <span id="status"></span><span id="diagnostics"></span></div>
+  <details>
+    <summary>WindowProxy details</summary>
+    <pre id="details"></pre>
+  </details>
+</div>
+
+<div class="example">
+  <code>&lt;a href=url target="split-demo" windowfeatures="<span class="features">split,splitposition=right,splitsize=60</span>"&gt;</code>:<br>
+  <a href="https://en.wikipedia.org/wiki/Web_browser" target="split-demo" windowfeatures="split,splitposition=right,splitsize=60">Wikipedia</a>
+  <a href="https://www.w3.org" target="split-demo" windowfeatures="split,splitposition=right,splitsize=60">W3C</a>
+  <a href="https://example.com" target="split-demo" windowfeatures="split,splitposition=right,splitsize=60">Example.com</a>
+  <a href="https://www.youtube.com" target="split-demo" windowfeatures="split,splitposition=right,splitsize=60">YouTube (COOP!)</a>
 </div>
 
 <style>
+  .settings {
+    display: flex;
+    gap: 24px;
+    align-items: center;
+  }
+
+  .settings label {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  select,
+  ::picker(select) {
+    appearance: base-select;
+  }
+
   .example {
     border: 1px solid #ccc;
     padding: 16px;
@@ -25,12 +71,112 @@
     display: inline-block;
     margin-bottom: 8px;
   }
+
+  .example a {
+    margin-right: 16px;
+  }
 </style>
 
-<p id="detection"></p>
+<p>The split tabs feature is <span id="detection"></span> in this browser.</p>
 <script>
   const supported = 'windowFeatures' in HTMLAnchorElement.prototype;
-  document.getElementById('detection').textContent = supported
-    ? 'Feature seems to be supported (windowFeatures in HTMLAnchorElement)'
-    : 'Feature NOT supported (windowFeatures NOT in HTMLAnchorElement)';
+  const detection = document.getElementById('detection');
+  detection.textContent = supported ? 'supported' : 'NOT supported';
+  detection.style.color = supported ? 'green' : 'red';
+
+  const positionSelect = document.getElementById('splitposition');
+  const sizeSlider = document.getElementById('splitsize');
+  const sizeOutput = document.getElementById('splitsize-value');
+
+  function features() {
+    return `split,splitposition=${positionSelect.value},` +
+        `splitsize=${sizeSlider.value}`;
+  }
+
+  function updateFeatures() {
+    const value = features();
+    sizeOutput.textContent = sizeSlider.value;
+    document.querySelectorAll('.features').forEach(el => {
+      el.textContent = value;
+    });
+    document.querySelectorAll('a[windowfeatures]').forEach(a => {
+      a.setAttribute('windowfeatures', value);
+    });
+  }
+
+  positionSelect.addEventListener('change', updateFeatures);
+  sizeSlider.addEventListener('input', updateFeatures);
+  updateFeatures();
+
+  let handle = null;
+  document.querySelectorAll('button[data-url]').forEach(button => {
+    button.addEventListener('click', () => {
+      handle = window.open(button.dataset.url, 'split-demo', features());
+    });
+  });
+
+  // For declarative links, look up the named window after the click's
+  // activation behavior has run. window.open() with an empty URL returns the
+  // existing named window without navigating it. This is only done right
+  // after a link click, when the named window is known to exist; otherwise
+  // window.open() would create a new blank window.
+  document.querySelectorAll('a[target="split-demo"]').forEach(a => {
+    a.addEventListener('click', () => {
+      setTimeout(() => {
+        handle = window.open('', 'split-demo');
+      }, 0);
+    });
+  });
+
+  const closeWarning = document.getElementById('close-warning');
+  document.addEventListener('click', () => {
+    closeWarning.textContent = '';
+  }, {capture: true});
+  document.getElementById('close').addEventListener('click', () => {
+    if (handle && !handle.closed) {
+      handle.close();
+    } else {
+      closeWarning.textContent = 'no connection!';
+    }
+  });
+
+  function read(fn) {
+    try {
+      return String(fn());
+    } catch (e) {
+      return 'inaccessible';
+    }
+  }
+
+  setInterval(() => {
+    const summary = document.getElementById('diagnostics');
+    const statusEl = document.getElementById('status');
+    const details = document.getElementById('details');
+    if (!handle) {
+      statusEl.textContent = '';
+      summary.textContent = 'no window opened';
+      details.textContent = '';
+      return;
+    }
+    const status = read(() => handle.closed ? 'closed' : 'open');
+    const href = read(() => handle.location.href);
+    const innerSize = read(() => `${handle.innerWidth} x ${handle.innerHeight}`);
+    statusEl.textContent = status;
+    statusEl.style.color =
+        status === 'open' ? 'green' : status === 'closed' ? 'red' : '';
+    summary.textContent =
+        `, ${href === 'inaccessible' ? 'cross origin' : 'same origin'}`;
+    details.textContent = [
+      `closed: ${read(() => handle.closed)}`,
+      `opener === this window: ${read(() => handle.opener === window)}`,
+      `top === handle: ${read(() => handle.top === handle)}`,
+      `frames.length: ${read(() => handle.length)}`,
+      `location.href: ${href}`,
+      `name: ${read(() => handle.name)}`,
+      `document.title: ${read(() => handle.document.title)}`,
+      `inner size: ${innerSize}`,
+      `outer size: ${read(() => `${handle.outerWidth} x ${handle.outerHeight}`)}`,
+      `screenX, screenY: ${read(() => `${handle.screenX}, ${handle.screenY}`)}`,
+    ].join('\n');
+  }, 250);
 </script>
