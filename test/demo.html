@@ -2,46 +2,53 @@
 <meta charset="utf-8">
 <link rel="help" href="https://github.com/mfreed7/split-tabs">
 
-<div class="settings">
-  <label>splitposition:
-    <select id="splitposition">
-      <option value="left">left</option>
-      <option value="right" selected>right</option>
-      <option value="top">top</option>
-      <option value="bottom">bottom</option>
-    </select>
-  </label>
-  <label>splitsize:
-    <input type="range" id="splitsize" min="0" max="100" value="60">
-    <output id="splitsize-value">60</output>
-  </label>
-  <button id="close">Close the split!</button>
-  <span id="close-warning" style="color: red"></span>
-</div>
+<fieldset>
+  <legend>Settings</legend>
+  <div class="settings">
+    <label>splitposition:
+      <select id="splitposition">
+        <option value="left">left</option>
+        <option value="right" selected>right</option>
+        <option value="top">top</option>
+        <option value="bottom">bottom</option>
+      </select>
+    </label>
+    <label>splitsize:
+      <input type="range" id="splitsize" min="0" max="100" value="60">
+      <output id="splitsize-value">60</output>
+    </label>
+    <button id="close">Close the split!</button>
+    <span id="close-warning" style="color: red"></span>
+  </div>
+</fieldset>
 
-<div class="example">
+<fieldset>
+  <legend>Imperative API</legend>
   <code>window.open(url, 'split-demo', '<span class="features">split,splitposition=right,splitsize=60</span>')</code>:<br>
   <button data-url="https://en.wikipedia.org/wiki/Web_browser">Wikipedia</button>
   <button data-url="https://www.w3.org">W3C</button>
   <button data-url="https://example.com">Example.com</button>
   <button data-url="https://www.youtube.com">YouTube (COOP!)</button>
-</div>
+</fieldset>
 
-<div class="example">
-  <div>Diagnostics: <span id="status"></span><span id="diagnostics"></span></div>
-  <details>
-    <summary>WindowProxy details</summary>
-    <pre id="details"></pre>
-  </details>
-</div>
-
-<div class="example">
+<fieldset>
+  <legend>Declarative API</legend>
   <code>&lt;a href=url target="split-demo" windowfeatures="<span class="features">split,splitposition=right,splitsize=60</span>"&gt;</code>:<br>
   <a href="https://en.wikipedia.org/wiki/Web_browser" target="split-demo" windowfeatures="split,splitposition=right,splitsize=60">Wikipedia</a>
   <a href="https://www.w3.org" target="split-demo" windowfeatures="split,splitposition=right,splitsize=60">W3C</a>
   <a href="https://example.com" target="split-demo" windowfeatures="split,splitposition=right,splitsize=60">Example.com</a>
   <a href="https://www.youtube.com" target="split-demo" windowfeatures="split,splitposition=right,splitsize=60">YouTube (COOP!)</a>
-</div>
+</fieldset>
+
+<fieldset>
+  <legend>Diagnostics</legend>
+  <div>Diagnostics: <span id="status"></span><span id="diagnostics"></span></div>
+  <details>
+    <summary>WindowProxy details</summary>
+    <pre id="details"></pre>
+  </details>
+  <p>The split tabs feature is <span id="detection"></span> in this browser.</p>
+</fieldset>
 
 <style>
   .settings {
@@ -61,7 +68,8 @@
     appearance: base-select;
   }
 
-  .example {
+  fieldset {
+    width: fit-content;
     border: 1px solid #ccc;
     padding: 16px;
     margin: 20px 0;
@@ -72,12 +80,11 @@
     margin-bottom: 8px;
   }
 
-  .example a {
+  fieldset a {
     margin-right: 16px;
   }
 </style>
 
-<p>The split tabs feature is <span id="detection"></span> in this browser.</p>
 <script>
   const supported = 'windowFeatures' in HTMLAnchorElement.prototype;
   const detection = document.getElementById('detection');
